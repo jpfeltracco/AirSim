@@ -25,13 +25,14 @@ void ASimModeWorldMultiRotor::BeginPlay()
     if (fpv_vehicle_connector_ != nullptr) {
         //create its control server
         try {
-            fpv_vehicle_connector_->startApiServer();
+            //fpv_vehicle_connector_->startApiServer();
         }
         catch (std::exception& ex) {
             UAirBlueprintLib::LogMessageString("Cannot start RpcLib Server", ex.what(), LogDebugLevel::Failure);
         }
     }
 
+    columns = { "Timestamp", "Position(x)", "Position(y)" , "Position(z)", "Orientation(w)", "Orientation(x)", "Orientation(y)", "Orientation(z)", "ImageName" };
 }
 
 void ASimModeWorldMultiRotor::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -116,8 +117,10 @@ void ASimModeWorldMultiRotor::setupVehiclesAndCamera(std::vector<VehiclePtr>& ve
         }
 
         //set up vehicle pawns
+		int i = 0;
         for (AActor* pawn : pawns)
         {
+
             //initialize each vehicle pawn we found
             TMultiRotorPawn* vehicle_pawn = static_cast<TMultiRotorPawn*>(pawn);
             vehicle_pawn->initializeForBeginPlay();
@@ -130,14 +133,18 @@ void ASimModeWorldMultiRotor::setupVehiclesAndCamera(std::vector<VehiclePtr>& ve
                 fpv_vehicle_pawn_wrapper_ = wrapper;
 
             //now create the connector for each pawn
-            VehiclePtr vehicle = createVehicle(wrapper);
+            VehiclePtr vehicle = createVehicle(wrapper, i);
             if (vehicle != nullptr) {
                 vehicles.push_back(vehicle);
 
                 if (fpv_vehicle_pawn_wrapper_ == wrapper)
                     fpv_vehicle_connector_ = vehicle;
+
+				vehicle->startApiServer();
             }
             //else we don't have vehicle for this pawn
+
+			i++;
         }
     }
 
@@ -186,11 +193,13 @@ void ASimModeWorldMultiRotor::createVehicles(std::vector<VehiclePtr>& vehicles)
     setupVehiclesAndCamera(vehicles);
 }
 
-ASimModeWorldBase::VehiclePtr ASimModeWorldMultiRotor::createVehicle(VehiclePawnWrapper* wrapper)
+ASimModeWorldBase::VehiclePtr ASimModeWorldMultiRotor::createVehicle(VehiclePawnWrapper* wrapper, int port_offset)
 {
     auto vehicle_params = MultiRotorParamsFactory::createConfig(
         wrapper->config.vehicle_config_name == "" ? default_vehicle_config
         : std::string(TCHAR_TO_UTF8(*wrapper->config.vehicle_config_name)));
+
+	vehicle_params->getParams().api_server_port += port_offset;
 
     vehicle_params_.push_back(std::move(vehicle_params));
 
