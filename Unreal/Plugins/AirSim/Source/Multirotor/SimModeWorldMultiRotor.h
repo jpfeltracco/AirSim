@@ -27,7 +27,7 @@ protected:
     typedef AFlyingPawn TMultiRotorPawn;
 
     virtual void createVehicles(std::vector<VehiclePtr>& vehicles) override;
-    VehiclePtr createVehicle(VehiclePawnWrapper* wrapper);
+    VehiclePtr createVehicle(VehiclePawnWrapper* wrapper, int port_offset);
 
 private:
     void setupVehiclesAndCamera(std::vector<VehiclePtr>& vehicles);
